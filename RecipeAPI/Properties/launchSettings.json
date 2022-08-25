@@ -1,18 +1,18 @@
 ﻿{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:21531",
-      "sslPort": 44331
+      "applicationUrl": "http://localhost:1276",
+      "sslPort": 44300
     }
   },
   "profiles": {
-    "RecipeFrontendJWT": {
+    "RecipeAPI": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "applicationUrl": "https://localhost:7095;http://localhost:5095",
+      "applicationUrl": "https://localhost:7001;http://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

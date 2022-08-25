@@ -1,0 +1,142 @@
+[
+  {
+    "Id": "934d603a-5dda-49ea-ba83-30028d623bec",
+    "Title": "Blueberry Granita",
+    "Ingredients": [
+      "2\u2009\u00BD cups blueberries",
+      "\u00BD cup white sugar",
+      "\u00BE cup water",
+      "1 tablespoon fresh lemon juice"
+    ],
+    "Instructions": [
+      "Blend the blueberries and sugar in a food processor until smooth; strain through a fine-mesh strainer, pressing with a wooden spoon to separate the blueberry puree from any chunks of skin or seeds.",
+      "Stir the strained blueberry puree, water, and lemon juice together in a shallow glass baking dish or tray. Place the dish in the freezer; scrape and stir the blueberry mixture with a fork once an hour until evenly frozen and icy, about 4 hours. Scrape to fluff and lighten the ice crystals; spoon into chilled glasses to serve."
+    ],
+    "Categories": [
+      "Lunch",
+      "Dessert",
+      "Dinner",
+      "Chineese"
+    ]
+  },
+  {
+    "Id": "6b777691-ee8f-4de2-ba88-b4aeee381125",
+    "Title": "Cookies",
+    "Ingredients": [
+      "premade cookies (if you are lazy)",
+      "milk or alternative"
+    ],
+    "Instructions": [
+      "nuke your cookies and watch them swirl",
+      "high energy 10 mins",
+      "dunk in milk and enjoy"
+    ],
+    "Categories": [
+      "Dessert",
+      "Chineese"
+    ]
+  },
+  {
+    "Id": "c1fb2d1c-e080-425e-90a8-e9eb0d7851b2",
+    "Title": "Egyptian Kofta",
+    "Ingredients": [
+      "Beef",
+      "Salt",
+      "Onion"
+    ],
+    "Instructions": [
+      "Season the beef",
+      "Add Grated Onion",
+      "cook it for 30 mins"
+    ],
+    "Categories": [
+      "Oriental",
+      "Lunch"
+    ]
+  },
+  {
+    "Id": "965bd734-03ec-4242-8d55-59caab01672e",
+    "Title": "Lasagna",
+    "Ingredients": [
+      "Pasta",
+      "Flour",
+      "Milk",
+      "Butter",
+      "Bolognese Sauce"
+    ],
+    "Instructions": [
+      "Boil the pasta",
+      "Make the bechemal sauce",
+      "add bolognese",
+      "assemble",
+      "eat"
+    ],
+    "Categories": [
+      "Italian",
+      "Dinner",
+      "Lunch"
+    ]
+  },
+  {
+    "Id": "0e62315d-2a70-45b3-a83c-cdaa974c2aaf",
+    "Title": "Meatballs",
+    "Ingredients": [
+      "Beefs",
+      "Salt",
+      "Tomato sauce"
+    ],
+    "Instructions": [
+      "Season the beef",
+      "Add tomato sauce",
+      "Stir",
+      "cook it"
+    ],
+    "Categories": [
+      "Lunch",
+      "Dinner",
+      "Italian",
+      "Breakfast",
+      "Chineese"
+    ]
+  },
+  {
+    "Id": "22a97255-dbd5-4dcf-9501-7c3d15b4a787",
+    "Title": "Pizza",
+    "Ingredients": [
+      "Dough",
+      "Tomato Sauce",
+      "Cheese",
+      "Toppings"
+    ],
+    "Instructions": [
+      "Stretch Dough",
+      "Add sauce",
+      "Add cheese \u0026 toppings",
+      "bake",
+      "eat"
+    ],
+    "Categories": [
+      "Lunch",
+      "Dinner",
+      "Breakfast",
+      "Chineese"
+    ]
+  },
+  {
+    "Id": "5a6ee3b6-6d49-4734-a010-957d4ea19374",
+    "Title": "Tuna Salad",
+    "Ingredients": [
+      "Canned Tuna",
+      "Mayo",
+      "Veggies"
+    ],
+    "Instructions": [
+      "Mix all stuff together"
+    ],
+    "Categories": [
+      "Dinner",
+      "Breakfast",
+      "Chineese"
+    ]
+  }
+]
