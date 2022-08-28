@@ -1,10 +1,17 @@
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using RecipeAPI;
 using RecipeAPI.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// services
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("Cors Policy",
@@ -17,7 +24,30 @@ builder.Services.AddCors(options =>
 				.AllowCredentials();
 		});
 });
+
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+
+builder.Services.AddAuthentication(x =>
+{
+	x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+	x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
+{
+	var Key = Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]);
+	o.SaveToken = true;
+	o.TokenValidationParameters = new TokenValidationParameters
+	{
+		ValidateIssuer = false,
+		ValidateAudience = false,
+		ValidateLifetime = true,
+		ValidateIssuerSigningKey = true,
+		ValidIssuer = builder.Configuration["JWT:Issuer"],
+		ValidAudience = builder.Configuration["JWT:Audience"],
+		IssuerSigningKey = new SymmetricSecurityKey(Key)
+	};
+});
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -33,6 +63,8 @@ app.UseSwaggerUI(options =>
 
 app.UseHttpsRedirection();
 app.UseCors("Cors Policy");
+app.UseAuthentication();
+app.UseAuthorization();
 
 // load previous categories if exists
 string categoriesFile = "Categories.json";
@@ -70,15 +102,89 @@ else
 	File.Create(recipesFile).Dispose();
 }
 
-app.MapGet("antiforgery/token", (IAntiforgery forgeryService, HttpContext context) =>
+// load previous Users if exists
+string usersFile = "Users.json";
+string jsonUsersString;
+var usersList = new List<User>();
+
+if (File.Exists(usersFile))
 {
-	var tokens = forgeryService.GetAndStoreTokens(context);
-	context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+	if (new FileInfo(usersFile).Length > 0)
+	{
+		jsonUsersString = await File.ReadAllTextAsync(usersFile);
+		usersList = JsonSerializer.Deserialize<List<User>>(jsonUsersString)!;
+	}
+}
+else
+{
+	File.Create(usersFile).Dispose();
+}
+
+JWToken? Authenticate(User user)
+{
+	if (!usersList.Any(x => x.Name == user.Name && x.Password == user.Password))
+	{
+		return null;
+	}
+
+	// Else we generate JSON Web Token
+	var tokenHandler = new JwtSecurityTokenHandler();
+	var tokenKey = Encoding.UTF8.GetBytes(app.Configuration["JWT:Key"]);
+	var tokenDescriptor = new SecurityTokenDescriptor
+	{
+		Subject = new ClaimsIdentity(new Claim[]
+		{
+				new Claim(ClaimTypes.Name, user.Name)
+		}),
+		Expires = DateTime.UtcNow.AddMinutes(10),
+		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+	};
+	var token = tokenHandler.CreateToken(tokenDescriptor);
+	return new JWToken { Token = tokenHandler.WriteToken(token) };
+}
+
+// user enpoint
+app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService, User user) =>
+{
+	if (user.Name == String.Empty || user.Password == String.Empty || usersList.Exists(oldUser => oldUser.Name == user.Name))
+	{
+		return Results.BadRequest();
+	}
+	usersList.Add(user);
+	await SaveAsync();
+
+	var token = Authenticate(user);
+
+	if (token == null)
+	{
+		return Results.Unauthorized();
+	}
+
+	var csrfTokens = forgeryService.GetAndStoreTokens(context);
+	context.Response.Cookies.Append("XSRF-TOKEN", csrfTokens.RequestToken!,
 			new CookieOptions { HttpOnly = false });
+
+	return Results.Created($"/users/{user.Name}", user);
 });
 
-// endpoints
-app.MapGet("/recipes", async (HttpContext context, IAntiforgery forgeryService) =>
+app.MapPost("/login", (HttpContext context, IAntiforgery forgeryService, User user) =>
+{
+	var token = Authenticate(user);
+
+	if (token == null)
+	{
+		return Results.Unauthorized();
+	}
+
+	var csrfTokens = forgeryService.GetAndStoreTokens(context);
+	context.Response.Cookies.Append("XSRF-TOKEN", csrfTokens.RequestToken!,
+			new CookieOptions { HttpOnly = false });
+
+	return Results.Ok(token);
+});
+
+// recipe endpoints
+app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	return Results.Ok(recipesList);
@@ -134,6 +240,7 @@ app.MapPut("/recipes/{id}", async (Recipe editedRecipe, HttpContext context, IAn
 	return Results.NotFound();
 });
 
+// category endpoints
 app.MapGet("/categories", async (HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
@@ -211,7 +318,8 @@ async Task SaveAsync()
 {
 	await Task.WhenAll(
 		File.WriteAllTextAsync(recipesFile, JsonSerializer.Serialize(recipesList, new JsonSerializerOptions { WriteIndented = true })),
-		File.WriteAllTextAsync(categoriesFile, JsonSerializer.Serialize(categoriesList, new JsonSerializerOptions { WriteIndented = true }))
+		File.WriteAllTextAsync(categoriesFile, JsonSerializer.Serialize(categoriesList, new JsonSerializerOptions { WriteIndented = true })),
+		File.WriteAllTextAsync(usersFile, JsonSerializer.Serialize(usersList, new JsonSerializerOptions { WriteIndented = true }))
 		);
 }
 
