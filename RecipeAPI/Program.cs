@@ -160,11 +160,7 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 		return Results.Unauthorized();
 	}
 
-	var csrfTokens = forgeryService.GetAndStoreTokens(context);
-	context.Response.Cookies.Append("XSRF-TOKEN", csrfTokens.RequestToken!,
-			new CookieOptions { HttpOnly = false });
-
-	return Results.Created($"/users/{user.Name}", user);
+	return Results.Created($"/users/{user.Name}", token);
 });
 
 app.MapPost("/login", (HttpContext context, IAntiforgery forgeryService, User user) =>
@@ -176,11 +172,14 @@ app.MapPost("/login", (HttpContext context, IAntiforgery forgeryService, User us
 		return Results.Unauthorized();
 	}
 
-	var csrfTokens = forgeryService.GetAndStoreTokens(context);
-	context.Response.Cookies.Append("XSRF-TOKEN", csrfTokens.RequestToken!,
-			new CookieOptions { HttpOnly = false });
-
 	return Results.Ok(token);
+});
+
+app.MapGet("antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpContext context) =>
+{
+	var tokens = forgeryService.GetAndStoreTokens(context);
+	context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
+			new CookieOptions { HttpOnly = false });
 });
 
 // recipe endpoints
@@ -190,7 +189,7 @@ app.MapGet("/recipes", [Authorize] async (HttpContext context, IAntiforgery forg
 	return Results.Ok(recipesList);
 });
 
-app.MapGet("/recipes/{id}", async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
+app.MapGet("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (recipesList.Find(recipe => recipe.Id == id) is Recipe recipe)
@@ -200,7 +199,7 @@ app.MapGet("/recipes/{id}", async (Guid id, HttpContext context, IAntiforgery fo
 	return Results.NotFound();
 });
 
-app.MapPost("/recipes", async (Recipe recipe, HttpContext context, IAntiforgery forgeryService) =>
+app.MapPost("/recipes", [Authorize] async (Recipe recipe, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (recipe.Title == String.Empty)
@@ -214,7 +213,7 @@ app.MapPost("/recipes", async (Recipe recipe, HttpContext context, IAntiforgery 
 	return Results.Created($"/recipes/{recipe.Id}", recipe);
 });
 
-app.MapDelete("/recipes/{id}", async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
+app.MapDelete("/recipes/{id}", [Authorize] async (Guid id, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (recipesList.Find(recipe => recipe.Id == id) is Recipe recipe)
@@ -226,7 +225,7 @@ app.MapDelete("/recipes/{id}", async (Guid id, HttpContext context, IAntiforgery
 	return Results.NotFound();
 });
 
-app.MapPut("/recipes/{id}", async (Recipe editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
+app.MapPut("/recipes/{id}", [Authorize] async (Recipe editedRecipe, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (recipesList.Find(recipe => recipe.Id == editedRecipe.Id) is Recipe recipe)
@@ -241,13 +240,13 @@ app.MapPut("/recipes/{id}", async (Recipe editedRecipe, HttpContext context, IAn
 });
 
 // category endpoints
-app.MapGet("/categories", async (HttpContext context, IAntiforgery forgeryService) =>
+app.MapGet("/categories", [Authorize] async (HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	return Results.Ok(categoriesList);
 });
 
-app.MapPost("/categories", async (string category, HttpContext context, IAntiforgery forgeryService) =>
+app.MapPost("/categories", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (category == String.Empty || categoriesList.Contains(category))
@@ -262,7 +261,7 @@ app.MapPost("/categories", async (string category, HttpContext context, IAntifor
 	return Results.Created($"/categories/{category}", category);
 });
 
-app.MapDelete("/categories/{category}", async (string category, HttpContext context, IAntiforgery forgeryService) =>
+app.MapDelete("/categories/{category}", [Authorize] async (string category, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (category == String.Empty)
@@ -284,7 +283,7 @@ app.MapDelete("/categories/{category}", async (string category, HttpContext cont
 	return Results.Ok(category);
 });
 
-app.MapPut("/categories/{category}", async (string category, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
+app.MapPut("/categories/{category}", [Authorize] async (string category, string editedCategory, HttpContext context, IAntiforgery forgeryService) =>
 {
 	await forgeryService.ValidateRequestAsync(context);
 	if (editedCategory == String.Empty)

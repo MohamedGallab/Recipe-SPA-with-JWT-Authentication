@@ -5,6 +5,23 @@
 @{
 	ViewData["Title"] = "Yumyums";
 }
+
+@* Register *@
+<div x-show="tab == 'register'"
+	 x-data="{username: '', password: ''}">
+	<input id="createCategoryTitle" x-model="username" required />
+	<input id="createCategoryTitle" x-model="password" required />
+	<button x-on:click="await register(username, password); tab = 'recipes';">register</button>
+</div>
+
+@* Login *@
+<div x-show="tab == 'login'"
+	 x-data="{username: '', password: ''}">
+	<input id="createCategoryTitle" x-model="username" required />
+	<input id="createCategoryTitle" x-model="password" required />
+	<button x-on:click="await login(username, password); tab = 'recipes';">login</button>
+</div>
+
 @* Recipes Tab *@
 <div x-show="tab == 'recipes'">
 	<div class="container d-flex justify-content-between align-items-center my-4">
@@ -357,15 +374,18 @@
 		</div>
 	</div>
 </div>
+
 <script type="text/javascript">
 	const baseUrl = '@Configuration["BaseUrl"]';
 
 	async function getToken() {
 		let response = await fetch(new URL('/antiforgery/token', baseUrl).toString(), {
 			method: "GET",
+			headers: {
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+			},
 			credentials: 'include'
 		});
-
 		if (response.ok) {
 			return document.cookie
 				.split("; ")
@@ -374,10 +394,47 @@
 		}
 	}
 
+	async function login(username, password) {
+		await fetch(new URL('/login', baseUrl).toString(), {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				'name': username,
+				'password': password
+			})
+		}).then(response => response.json()).then(jwt => {
+			Alpine.store('jwt', jwt.token);
+			Alpine.store('xsrfToken', getToken());
+		});
+		await updateDB();
+	}
+
+	async function register(username, password) {
+		await fetch(new URL('/register', baseUrl).toString(), {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				'name': username,
+				'password': password
+			})
+		}).then(response => response.json()).then(jwt => {
+			Alpine.store('jwt', jwt.token);
+			Alpine.store('xsrfToken', getToken());
+		});
+		await updateDB();
+	}
+
 	document.addEventListener('alpine:init', () => {
-		Alpine.store('xsrfToken', getToken());
-		Alpine.store('recipes', getRecipes());
-		Alpine.store('categories', getCategories());
+		Alpine.store('jwt');
+		Alpine.store('xsrfToken');
+		Alpine.store('recipes');
+		Alpine.store('categories');
 	});
 
 	async function updateDB() {
@@ -389,7 +446,8 @@
 		return fetch(new URL('/recipes', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		}).then(response => response.json());
@@ -399,7 +457,8 @@
 		return fetch(new URL('/categories', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		}).then(response => response.json());
@@ -420,7 +479,8 @@
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include',
 			body: JSON.stringify(recipe)
@@ -453,7 +513,8 @@
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		});
@@ -485,7 +546,8 @@
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include',
 			body: JSON.stringify(recipe)
@@ -518,7 +580,8 @@
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		});
@@ -550,7 +613,8 @@
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		});
@@ -582,7 +646,8 @@
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken')
+				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + await Alpine.store('jwt')
 			},
 			credentials: 'include'
 		});
