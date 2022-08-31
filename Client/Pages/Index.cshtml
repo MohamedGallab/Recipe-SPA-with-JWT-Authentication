@@ -7,23 +7,71 @@
 }
 
 @* Register *@
-<div x-show="tab == 'register'"
+<div x-show="$store.tab == 'register'"
 	 x-data="{username: '', password: ''}">
-	<input id="createCategoryTitle" x-model="username" required />
-	<input id="createCategoryTitle" x-model="password" required />
-	<button x-on:click="await register(username, password); tab = 'recipes';">register</button>
+	<form x-on:submit.prevent="await register(username, password);">
+		<div class="container d-flex flex-column align-items-center justify-content-center ">
+			<div class="card my-5 col-6">
+				<div class="card-body">
+					<h5 class="card-title">Register</h5>
+					<div class="card-text">
+						<div class="mb-3 row">
+							<label for="registerUsername" class="col-sm-3 col-form-label">Username</label>
+							<div class="col-sm-9">
+								<input class="form-control" id="registerUsername" x-model="username" required>
+							</div>
+						</div>
+						<div class="mb-3 row">
+							<label for="registerPassword" class="col-sm-3 col-form-label">Password</label>
+							<div class="col-sm-9">
+								<input type="password" class="form-control" id="registerPassword" x-model="password" required>
+							</div>
+						</div>
+					</div>
+					<button class="btn btn-primary float-end" type="submit">register</button>
+				</div>
+			</div>
+			<a href="#" x-on:click.prevent="$store.tab = 'login'">
+				Already have an account?
+			</a>
+		</div>
+	</form>
 </div>
 
 @* Login *@
-<div x-show="tab == 'login'"
+<div x-show="$store.tab == 'login'"
 	 x-data="{username: '', password: ''}">
-	<input id="createCategoryTitle" x-model="username" required />
-	<input id="createCategoryTitle" x-model="password" required />
-	<button x-on:click="await login(username, password); tab = 'recipes';">login</button>
+	<form x-on:submit.prevent="await login(username, password);">
+		<div class="container d-flex flex-column align-items-center justify-content-center ">
+			<div class="card my-5 col-6">
+				<div class="card-body">
+					<h5 class="card-title">Login</h5>
+					<div class="card-text">
+						<div class="mb-3 row">
+							<label for="loginUsername" class="col-sm-3 col-form-label">Username</label>
+							<div class="col-sm-9">
+								<input class="form-control" id="loginUsername" x-model="username" required>
+							</div>
+						</div>
+						<div class="mb-3 row">
+							<label for="loginPassword" class="col-sm-3 col-form-label">Password</label>
+							<div class="col-sm-9">
+								<input type="password" class="form-control" id="loginPassword" x-model="password" required>
+							</div>
+						</div>
+					</div>
+					<button class="btn btn-primary float-end" type="submit">login</button>
+				</div>
+			</div>
+			<a href="#" x-on:click.prevent="$store.tab = 'register'">
+				Don't have an account?
+			</a>
+		</div>
+	</form>
 </div>
 
 @* Recipes Tab *@
-<div x-show="tab == 'recipes'">
+<div x-show="$store.tab == 'recipes'">
 	<div class="container d-flex justify-content-between align-items-center my-4">
 		<h2>All Recipes</h2>
 		<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRecipeModal">
@@ -131,7 +179,7 @@
 						</div>
 
 						@* Edit Recipe Modal *@
-						<div class="modal fade" :id="'editRecipeModal'+recipe.id" tabindex="-1">
+						<div class="modal fade" :id="'editRecipeModal' + recipe.id" tabindex="-1">
 							<div class="modal-dialog modal-lg">
 								<div class="modal-content">
 									<form x-on:submit.prevent="await putRecipe(formatRecipe(recipe)); $store.recipes = await getRecipes();"
@@ -144,23 +192,23 @@
 										<div class="modal-body">
 
 											<div class="my-3 row">
-												<label for="editRecipeTitle" class="col-2 col-form-label">Title</label>
+												<label :for="'editRecipeTitle' + recipe.id" class="col-2 col-form-label">Title</label>
 												<div class="col-7">
-													<input id="editRecipeTitle" x-model="recipe.title" class="form-control" required />
+													<input :id="'editRecipeTitle' + recipe.id" x-model="recipe.title" class="form-control" required />
 												</div>
 											</div>
 
 											<div class="my-3 row">
-												<label for="editRecipeIngredients" class="col-form-label col-2">Ingredients</label>
+												<label :for="'editRecipeIngredients' + recipe.id" class="col-form-label col-2">Ingredients</label>
 												<div class="col-7">
-													<textarea class="form-control" x-model="recipe.ingredients" id="editRecipeIngredients" rows="5" placeholder="enter every ingredient on a separate line"></textarea>
+													<textarea class="form-control" x-model="recipe.ingredients" :id="'editRecipeIngredients' + recipe.id" rows="5" placeholder="enter every ingredient on a separate line"></textarea>
 												</div>
 											</div>
 
 											<div class="my-3 row">
-												<label for="editRecipeInstructions" class="col-form-label col-2">Instructions</label>
+												<label :for="'editRecipeInstructions' + recipe.id" class="col-form-label col-2">Instructions</label>
 												<div class="col-7">
-													<textarea class="form-control" x-model="recipe.instructions" id="editRecipeInstructions" rows="5" placeholder="enter every instruction on a separate line"></textarea>
+													<textarea class="form-control" x-model="recipe.instructions" :id="'editRecipeInstructions' + recipe.id" rows="5" placeholder="enter every instruction on a separate line"></textarea>
 												</div>
 											</div>
 
@@ -195,7 +243,7 @@
 </div>
 
 @* Category Tab *@
-<div x-show="tab=='categories'">
+<div x-show="$store.tab == 'categories'">
 	<div class="container d-flex justify-content-between align-items-center my-4">
 		<h2>All Categories</h2>
 		<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
@@ -237,9 +285,9 @@
 									</div>
 									<div class="modal-body">
 										<div class="my-3 row">
-											<label for="editCategoryTitle" class="col-2 col-form-label">Title</label>
+											<label :for="'editCategoryTitle' + category.replace(/\s/g, '');" class="col-2 col-form-label">Title</label>
 											<div class="col-10">
-												<input id="editCategoryTitle" x-model="editedCategory" class="form-control" required />
+												<input :id="'editCategoryTitle' + category.replace(/\s/g, '');" x-model="editedCategory" class="form-control" required />
 											</div>
 										</div>
 									</div>
@@ -378,6 +426,103 @@
 <script type="text/javascript">
 	const baseUrl = '@Configuration["BaseUrl"]';
 
+	document.addEventListener('alpine:init', () => {
+		Alpine.store('jwt');
+		Alpine.store('xsrfToken');
+		Alpine.store('recipes');
+		Alpine.store('categories');
+		Alpine.store('tab', 'login');
+	});
+
+	async function register(username, password) {
+		let response = await fetch(new URL('/register', baseUrl).toString(), {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				'name': username,
+				'password': password
+			})
+		});
+
+		let jwt = await response.json();
+		Alpine.store('jwt', jwt.token);
+		Alpine.store('xsrfToken', getToken());
+		await updateDB();
+
+		Alpine.store('tab', 'recipes');
+
+		if (response.ok) {
+			Swal.fire({
+				text: `Successfully registered`,
+				toast: true,
+				position: 'top-end',
+				showConfirmButton: false,
+				icon: 'success',
+				timer: 1700
+			});
+		}
+		else {
+			Swal.fire({
+				text: `Failed to registered`,
+				toast: true,
+				position: 'top-end',
+				showConfirmButton: false,
+				icon: 'error',
+				timer: 1700
+			});
+		}
+	}
+
+	async function login(username, password) {
+		let response = await fetch(new URL('/login', baseUrl).toString(), {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				'name': username,
+				'password': password
+			})
+		});
+
+		let jwt = await response.json();
+		Alpine.store('jwt', jwt.token);
+		Alpine.store('xsrfToken', await getToken());
+		await updateDB();
+
+		Alpine.store('tab', 'recipes');
+
+		if (response.ok) {
+			Swal.fire({
+				text: `Successfully logged`,
+				toast: true,
+				position: 'top-end',
+				showConfirmButton: false,
+				icon: 'success',
+				timer: 1700
+			});
+		}
+		else {
+			Swal.fire({
+				text: `Failed to login`,
+				toast: true,
+				position: 'top-end',
+				showConfirmButton: false,
+				icon: 'error',
+				timer: 1700
+			});
+		}
+	}
+
+	async function updateDB() {
+		Alpine.store('recipes', getRecipes());
+		Alpine.store('categories', getCategories());
+	}
+
 	async function getToken() {
 		let response = await fetch(new URL('/antiforgery/token', baseUrl).toString(), {
 			method: "GET",
@@ -392,54 +537,6 @@
 				.find(row => row.startsWith("XSRF-TOKEN="))
 				.split("=")[1];
 		}
-	}
-
-	async function login(username, password) {
-		await fetch(new URL('/login', baseUrl).toString(), {
-			method: 'POST',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				'name': username,
-				'password': password
-			})
-		}).then(response => response.json()).then(jwt => {
-			Alpine.store('jwt', jwt.token);
-			Alpine.store('xsrfToken', getToken());
-		});
-		await updateDB();
-	}
-
-	async function register(username, password) {
-		await fetch(new URL('/register', baseUrl).toString(), {
-			method: 'POST',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				'name': username,
-				'password': password
-			})
-		}).then(response => response.json()).then(jwt => {
-			Alpine.store('jwt', jwt.token);
-			Alpine.store('xsrfToken', getToken());
-		});
-		await updateDB();
-	}
-
-	document.addEventListener('alpine:init', () => {
-		Alpine.store('jwt');
-		Alpine.store('xsrfToken');
-		Alpine.store('recipes');
-		Alpine.store('categories');
-	});
-
-	async function updateDB() {
-		Alpine.store('recipes', getRecipes());
-		Alpine.store('categories', getCategories());
 	}
 
 	async function getRecipes() {
