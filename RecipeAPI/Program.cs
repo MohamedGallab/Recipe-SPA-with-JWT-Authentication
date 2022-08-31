@@ -43,7 +43,18 @@ builder.Services.AddAuthentication(x =>
 		ValidateIssuerSigningKey = true,
 		ValidIssuer = builder.Configuration["JWT:Issuer"],
 		ValidAudience = builder.Configuration["JWT:Audience"],
-		IssuerSigningKey = new SymmetricSecurityKey(Key)
+		IssuerSigningKey = new SymmetricSecurityKey(Key),
+		ClockSkew = TimeSpan.Zero
+	};
+	o.Events = new JwtBearerEvents
+	{
+		OnAuthenticationFailed = context => {
+			if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+			{
+				context.Response.Headers.Add("IS-TOKEN-EXPIRED", "true");
+			}
+			return Task.CompletedTask;
+		}
 	};
 });
 
