@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using RecipeAPI;
 using RecipeAPI.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -48,7 +50,8 @@ builder.Services.AddAuthentication(x =>
 	};
 	o.Events = new JwtBearerEvents
 	{
-		OnAuthenticationFailed = context => {
+		OnAuthenticationFailed = context =>
+		{
 			if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
 			{
 				context.Response.Headers.Add("IS-TOKEN-EXPIRED", "true");
@@ -131,12 +134,49 @@ else
 	File.Create(usersFile).Dispose();
 }
 
+string GenerateRefreshToken()
+{
+	var randomNumber = new byte[32];
+	using (var rng = RandomNumberGenerator.Create())
+	{
+		rng.GetBytes(randomNumber);
+		return Convert.ToBase64String(randomNumber);
+	}
+}
+
 JWToken? Authenticate(User user)
 {
-	if (!usersList.Any(x => x.Name == user.Name && x.Password == user.Password))
+	PasswordHasher<string> pw = new();
+
+	if (!usersList.Any(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success))
 	{
 		return null;
 	}
+
+	// Else we generate JSON Web Token
+	var tokenHandler = new JwtSecurityTokenHandler();
+	var tokenKey = Encoding.UTF8.GetBytes(app.Configuration["JWT:Key"]);
+	var tokenDescriptor = new SecurityTokenDescriptor
+	{
+		Subject = new ClaimsIdentity(new Claim[]
+		{
+				new Claim(ClaimTypes.Name, user.Name)
+		}),
+		Expires = DateTime.UtcNow.AddMinutes(1),
+		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+	};
+	var token = tokenHandler.CreateToken(tokenDescriptor);
+	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
+}
+
+JWToken? Refresh(JWToken jwt)
+{
+	User user;
+
+	if (usersList.Find(x => x.RefreshToken == jwt.RefreshToken) is User tempUser)
+		user = tempUser;
+	else
+		return null;
 
 	// Else we generate JSON Web Token
 	var tokenHandler = new JwtSecurityTokenHandler();
@@ -151,7 +191,7 @@ JWToken? Authenticate(User user)
 		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
 	};
 	var token = tokenHandler.CreateToken(tokenDescriptor);
-	return new JWToken { Token = tokenHandler.WriteToken(token) };
+	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
 }
 
 // user enpoint
@@ -161,8 +201,10 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 	{
 		return Results.BadRequest();
 	}
+
+	PasswordHasher<string> pw = new();
+	user.Password = pw.HashPassword(user.Name, user.Password);
 	usersList.Add(user);
-	await SaveAsync();
 
 	var token = Authenticate(user);
 
@@ -171,26 +213,56 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 		return Results.Unauthorized();
 	}
 
+	user.RefreshToken = token.RefreshToken;
+	await SaveAsync();
 	return Results.Created($"/users/{user.Name}", token);
 });
 
-app.MapPost("/login", (HttpContext context, IAntiforgery forgeryService, User user) =>
+app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, User user) =>
 {
 	var token = Authenticate(user);
 
 	if (token == null)
 	{
 		return Results.Unauthorized();
+	}
+
+	if (usersList.Find(x => x.Name == user.Name && x.Password == user.Password) is User tempUser)
+	{
+		usersList.Remove(tempUser);
+		user.RefreshToken = token.RefreshToken;
+		usersList.Add(user);
+		await SaveAsync();
 	}
 
 	return Results.Ok(token);
 });
 
-app.MapGet("antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpContext context) =>
+app.MapGet("/antiforgery/token", [Authorize] (IAntiforgery forgeryService, HttpContext context) =>
 {
 	var tokens = forgeryService.GetAndStoreTokens(context);
 	context.Response.Cookies.Append("XSRF-TOKEN", tokens.RequestToken!,
 			new CookieOptions { HttpOnly = false });
+});
+
+app.MapPost("/refresh", async (JWToken jwt) =>
+{
+	var token = Refresh(jwt);
+
+	if (token == null)
+	{
+		return Results.Unauthorized();
+	}
+
+	if (usersList.Find(x => x.RefreshToken == jwt.RefreshToken) is User tempUser)
+	{
+		usersList.Remove(tempUser);
+		tempUser.RefreshToken = token.RefreshToken;
+		usersList.Add(tempUser);
+		await SaveAsync();
+	}
+
+	return Results.Ok(token);
 });
 
 // recipe endpoints

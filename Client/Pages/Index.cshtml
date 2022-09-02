@@ -448,8 +448,8 @@
 		});
 
 		let jwt = await response.json();
-		Alpine.store('jwt', jwt.token);
-		Alpine.store('xsrfToken', getToken());
+		Alpine.store('jwt', jwt);
+		Alpine.store('xsrfToken', await getToken());
 		await updateDB();
 
 		Alpine.store('tab', 'recipes');
@@ -490,7 +490,7 @@
 		});
 
 		let jwt = await response.json();
-		Alpine.store('jwt', jwt.token);
+		Alpine.store('jwt', jwt);
 		Alpine.store('xsrfToken', await getToken());
 		await updateDB();
 
@@ -519,15 +519,15 @@
 	}
 
 	async function updateDB() {
-		Alpine.store('recipes', getRecipes());
-		Alpine.store('categories', getCategories());
+		Alpine.store('recipes', await getRecipes());
+		Alpine.store('categories', await getCategories());
 	}
 
 	async function getToken() {
 		let response = await fetch(new URL('/antiforgery/token', baseUrl).toString(), {
 			method: "GET",
 			headers: {
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		});
@@ -543,8 +543,8 @@
 		return fetch(new URL('/recipes', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		}).then(response => response.json());
@@ -554,8 +554,8 @@
 		return fetch(new URL('/categories', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		}).then(response => response.json());
@@ -576,8 +576,8 @@
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include',
 			body: JSON.stringify(recipe)
@@ -610,8 +610,8 @@
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		});
@@ -643,8 +643,8 @@
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include',
 			body: JSON.stringify(recipe)
@@ -677,8 +677,8 @@
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		});
@@ -710,8 +710,8 @@
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		});
@@ -743,8 +743,8 @@
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-XSRF-TOKEN': await Alpine.store('xsrfToken'),
-				'Authorization': 'Bearer ' + await Alpine.store('jwt')
+				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
+				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
 		});
