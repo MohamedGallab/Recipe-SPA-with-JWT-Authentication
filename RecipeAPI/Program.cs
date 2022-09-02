@@ -144,16 +144,8 @@ string GenerateRefreshToken()
 	}
 }
 
-JWToken? Authenticate(User user)
+JWToken? GenerateJWT(User user)
 {
-	PasswordHasher<string> pw = new();
-
-	if (!usersList.Any(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success))
-	{
-		return null;
-	}
-
-	// Else we generate JSON Web Token
 	var tokenHandler = new JwtSecurityTokenHandler();
 	var tokenKey = Encoding.UTF8.GetBytes(app.Configuration["JWT:Key"]);
 	var tokenDescriptor = new SecurityTokenDescriptor
@@ -167,6 +159,19 @@ JWToken? Authenticate(User user)
 	};
 	var token = tokenHandler.CreateToken(tokenDescriptor);
 	return new JWToken { Token = tokenHandler.WriteToken(token), RefreshToken = GenerateRefreshToken() };
+}
+
+JWToken? Authenticate(User user)
+{
+	PasswordHasher<string> pw = new();
+
+	if (!usersList.Any(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success))
+	{
+		return null;
+	}
+
+	// Else we generate JSON Web Token
+	return GenerateJWT(user);
 }
 
 JWToken? Refresh(JWToken jwt)
@@ -206,7 +211,7 @@ app.MapPost("/register", async (HttpContext context, IAntiforgery forgeryService
 	user.Password = pw.HashPassword(user.Name, user.Password);
 	usersList.Add(user);
 
-	var token = Authenticate(user);
+	var token = GenerateJWT(user);
 
 	if (token == null)
 	{
