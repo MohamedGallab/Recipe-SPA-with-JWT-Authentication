@@ -435,26 +435,26 @@
 	});
 
 	async function register(username, password) {
-		let response = await fetch(new URL('/register', baseUrl).toString(), {
-			method: 'POST',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				'name': username,
-				'password': password
-			})
-		});
+		try {
+			let response = await fetch(new URL('/register', baseUrl).toString(), {
+				method: 'POST',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					'name': username,
+					'password': password
+				})
+			});
 
-		let jwt = await response.json();
-		Alpine.store('jwt', jwt);
-		Alpine.store('xsrfToken', await getToken());
-		await updateDB();
+			let jwt = await response.json();
+			Alpine.store('jwt', jwt);
+			Alpine.store('xsrfToken', await getToken());
+			await updateDB();
 
-		Alpine.store('tab', 'recipes');
+			Alpine.store('tab', 'recipes');
 
-		if (response.ok) {
 			Swal.fire({
 				text: `Successfully registered`,
 				toast: true,
@@ -464,9 +464,9 @@
 				timer: 1700
 			});
 		}
-		else {
+		catch (error) {
 			Swal.fire({
-				text: `Failed to registered`,
+				text: `Failed to login`,
 				toast: true,
 				position: 'top-end',
 				showConfirmButton: false,
@@ -477,26 +477,26 @@
 	}
 
 	async function login(username, password) {
-		let response = await fetch(new URL('/login', baseUrl).toString(), {
-			method: 'POST',
-			credentials: 'include',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				'name': username,
-				'password': password
-			})
-		});
+		try {
+			let response = await fetch(new URL('/login', baseUrl).toString(), {
+				method: 'POST',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					'name': username,
+					'password': password
+				})
+			});
 
-		let jwt = await response.json();
-		Alpine.store('jwt', jwt);
-		Alpine.store('xsrfToken', await getToken());
-		await updateDB();
+			let jwt = await response.json();
+			Alpine.store('jwt', jwt);
+			Alpine.store('xsrfToken', await getToken());
+			await updateDB();
 
-		Alpine.store('tab', 'recipes');
+			Alpine.store('tab', 'recipes');
 
-		if (response.ok) {
 			Swal.fire({
 				text: `Successfully logged`,
 				toast: true,
@@ -506,7 +506,7 @@
 				timer: 1700
 			});
 		}
-		else {
+		catch (error) {
 			Swal.fire({
 				text: `Failed to login`,
 				toast: true,
