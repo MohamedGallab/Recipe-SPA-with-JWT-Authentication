@@ -518,6 +518,25 @@
 		}
 	}
 
+	async function refresh() {
+		let response = await fetch(new URL('/refresh', baseUrl).toString(), {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(Alpine.store('jwt'))
+		});
+
+		if (!response.ok) {
+			throw 'Can not refresh';
+		}
+
+		let jwt = await response.json();
+		Alpine.store('jwt', jwt);
+		Alpine.store('xsrfToken', await getToken());
+	}
+
 	async function updateDB() {
 		Alpine.store('recipes', await getRecipes());
 		Alpine.store('categories', await getCategories());
@@ -540,25 +559,45 @@
 	}
 
 	async function getRecipes() {
-		return fetch(new URL('/recipes', baseUrl).toString(), {
+		let response = await fetch(new URL('/recipes', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
 				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
 				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
-		}).then(response => response.json());
+		});
+
+		if (response.ok) {
+			return await response.json();
+		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			return await getRecipes();
+		}
+
+		throw 'Error';
 	}
 
 	async function getCategories() {
-		return fetch(new URL('/categories', baseUrl).toString(), {
+		let response = await fetch(new URL('/categories', baseUrl).toString(), {
 			headers: {
 				'Content-Type': 'application/json',
 				'X-XSRF-TOKEN': Alpine.store('xsrfToken'),
 				'Authorization': 'Bearer ' + Alpine.store('jwt').token
 			},
 			credentials: 'include'
-		}).then(response => response.json());
+		});
+
+		if (response.ok) {
+			return await response.json();
+		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			return await getCategories();
+		}
+
+		throw 'Error';
 	}
 
 	function formatRecipe(recipe) {
@@ -593,6 +632,10 @@
 				timer: 1700
 			});
 		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await postRecipe(recipe);
+		}
 		else {
 			Swal.fire({
 				text: `Failed to create recipe ${recipe.title}`,
@@ -625,6 +668,10 @@
 				icon: 'success',
 				timer: 1700
 			});
+		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await postCategory(category);
 		}
 		else {
 			Swal.fire({
@@ -660,6 +707,10 @@
 				timer: 1700
 			});
 		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await putRecipe(recipe);
+		}
 		else {
 			Swal.fire({
 				text: `Failed to edit recipe ${recipe.title}`,
@@ -692,6 +743,10 @@
 				icon: 'success',
 				timer: 1700
 			});
+		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await putCategory(category, editedCategory);
 		}
 		else {
 			Swal.fire({
@@ -726,6 +781,10 @@
 				timer: 1700
 			});
 		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await deleteRecipe(recipe);
+		}
 		else {
 			Swal.fire({
 				text: `Failed to delete recipe ${recipe.title}`,
@@ -758,6 +817,10 @@
 				icon: 'success',
 				timer: 1700
 			});
+		}
+		else if (response.headers.get('is-token-expired')) {
+			await refresh();
+			await deleteCategory(category);
 		}
 		else {
 			Swal.fire({

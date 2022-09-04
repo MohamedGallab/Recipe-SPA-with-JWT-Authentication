@@ -23,6 +23,7 @@ builder.Services.AddCors(options =>
 				.WithOrigins(builder.Configuration["FrontendOrigin"])
 				.AllowAnyHeader()
 				.AllowAnyMethod()
+				.WithExposedHeaders("IS-TOKEN-EXPIRED")
 				.AllowCredentials();
 		});
 });
@@ -154,7 +155,7 @@ JWToken? GenerateJWT(User user)
 		{
 				new Claim(ClaimTypes.Name, user.Name)
 		}),
-		Expires = DateTime.UtcNow.AddMinutes(1),
+		Expires = DateTime.UtcNow.AddMinutes(10),
 		SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
 	};
 	var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -232,11 +233,11 @@ app.MapPost("/login", async (HttpContext context, IAntiforgery forgeryService, U
 		return Results.Unauthorized();
 	}
 
-	if (usersList.Find(x => x.Name == user.Name && x.Password == user.Password) is User tempUser)
+	PasswordHasher<string> pw = new();
+
+	if (usersList.Find(x => x.Name == user.Name && pw.VerifyHashedPassword(user.Name, x.Password, user.Password) == PasswordVerificationResult.Success) is User tempUser)
 	{
-		usersList.Remove(tempUser);
-		user.RefreshToken = token.RefreshToken;
-		usersList.Add(user);
+		tempUser.RefreshToken = token.RefreshToken;
 		await SaveAsync();
 	}
 
